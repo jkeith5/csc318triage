@@ -53,9 +53,14 @@ public class Main {
             bigTime=workEvent.time;
             //above preps the server and updates customer and statistics
             numInQueue=customerQueue.count;
+            System.out.println("Event type: "+workEvent.eventType);
+            System.out.println("Bigtime: "+bigTime);
+            System.out.println("current event time trigger: "+workEvent.time);
             switch (workEvent.eventType){
+
                 case 1://arrives at triage
                     if (!busy1&& numInQueue<=0){//server 1 is not busy
+                        System.out.println("case: 1");
                         newCust.timeArrived=bigTime;
                         busy1=true;
                         served1=newCust;
@@ -69,19 +74,85 @@ public class Main {
                         eventTime=delTimeServe+bigTime;
                         workEvent=new Event(4,eventTime,-9);
                         eventQueue.addInOrder(workEvent);
-                    }else {
+                    }else {//if server is busy, add to line
                         balkID++;
                         newCust=new Customer(balkID);
                         newCust.timeArrived=bigTime;
                         setAilment(newCust);
                         //line 142
                         balkTime=generateBalkTime(newCust)+bigTime;
-                        System.out.println(balkTime);
+                        System.out.println("balk time: "+balkTime);
                         addHeartInOrder(customerQueue,newCust);
+                        workEvent=new Event(5,balkTime,balkID);//generates balk events and addes in order
+                        eventQueue.addInOrder(workEvent);
                     }
-
+                    delTimeArrive=timeToEvent(3);
+                    eventTime=bigTime+delTimeArrive;
+                    workEvent=new Event(1,eventTime,0);
+                    eventQueue.addInOrder(workEvent);
+                    break;
+                case 2:
+                    System.out.println("HOPE YA AINT HERE, IF SO BAD STUFF HAPPENED");
+                    break;
+                case 3:
+                    //enter service bay 1
+                    System.out.println("case: 3");
+                    numInQueue=customerQueue.count;
+                    if (!busy1&&numInQueue>0){//cust in front enters service
+                        workCust=customerQueue.getVal(0);
+                        myBalkCust=workCust.balk;
+                        purgeEvent(eventQueue,myBalkCust);
+                        totalThruLine++;
+                        customerQueue.removeM(0);
+                        busy1=true;
+                        served1=workCust;
+                        if (workCust.ailment==0) {//rates of service based on ailment
+                            delTimeServe = timeToEvent(2);
+                        } else if (workCust.ailment==1){
+                            delTimeServe= timeToEvent(4);
+                        }else{
+                            delTimeServe=timeToEvent(6);
+                        }
+                        eventTime=delTimeServe+bigTime;
+                        workEvent=new Event(4,eventTime,-9);
+                        eventQueue.addInOrder(workEvent);
+                        customerQueue.count--;//decrements counter for amt in line
+                        numInQueue--;
+                    }
+                    break;
+                case 4:
+                    //leave service bay
+                    System.out.println("case: 4");
+                    busy1=false;
+                    totalThruSys++;
+                    numInQueue=customerQueue.count;
+                    if (numInQueue>0){//generates event for someone to enter line
+                        workEvent= new Event(3,bigTime+.0001,-9);
+                        eventQueue.addInOrder(workEvent);
+                    }
+                    break;
+                case 5:
+                    //this handles balk events.
+                    System.out.println("case: 5");
+                    myBalkCust=workEvent.custID;
+                    totalBalk++;
+                    removeEventBalk(customerQueue,myBalkCust);
+                    break;
+                case 8://shutdown event
+                    System.out.println("case: 8");
+                    System.out.println("SHUTDOWN EVENT");
+                    continue;
+                default:
+                    System.out.println("bad event type of: "+ workEvent.eventType +"at time: "+workEvent.time);
+                    break;
             }
-        }
+
+            eventQueue.removeM(0);//deletes processed event, and grabs next event.
+            eventQueue.sort();
+            workEvent=eventQueue.getVal(0);
+
+        }//end of loop
+
     }
     public static double timeToEvent(double rate){
         double delTime;
@@ -100,10 +171,12 @@ public class Main {
             for (int i=0; i<custLine.myList.size();i++){
                 if (custLine.getVal(i).ailment!=0){
                     custLine.myList.add(i,customer);
+                    custLine.count++;
+                    break;
                 }
             }
         }else{
-            custLine.addAtEnd(customer);
+            custLine.myList.add(customer);
         }
 
     }
@@ -117,7 +190,7 @@ public class Main {
             customer.ailment=1;
         else
             customer.ailment=2;
-        System.out.println(customer.ailment);
+        System.out.println("ailments:"+customer.ailment);
     }
 
     public static double generateBalkTime(Customer customer){
@@ -143,6 +216,7 @@ public class Main {
         int i, numInLine, custBalkID;
         Customer workCust= new Customer(-9);
         numInLine=custLine.count;
+
         workCust=custLine.getVal(0);
         custBalkID=workCust.getBalk();
         i=0;

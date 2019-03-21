@@ -21,8 +21,8 @@ public class GenericManager<T extends Comparable> {
             //greater than first, less than last
             while ((i<this.count)&& object.compareTo(this.myList.get(i))==1){
                 i++;
-                this.myList.add(i,object);
             }
+            this.myList.add(i,object);
         }
         this.count++;
     }
@@ -46,9 +46,9 @@ public class GenericManager<T extends Comparable> {
                 a=this.myList.get(i);
                 b=this.myList.get(i+1);
                 switch (a.compareTo(b)){
-                    case 1:
-                        break;
                     case -1:
+                        break;
+                    case 1:
                         xSave=this.myList.get(i);
                         ySave=this.myList.get(i+1);
                         this.myList.remove(i);

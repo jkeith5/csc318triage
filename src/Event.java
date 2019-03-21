@@ -10,7 +10,7 @@ public class Event implements Comparable {
     public Event(int type, double time, int balk){
         this.eventType= type;
         this.time=time;
-        if (type==7){//balk event
+        if (type==5){//balk event
             this.custID=balk;
         } else {
             this.custID=-9;
