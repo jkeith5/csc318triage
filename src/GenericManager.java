@@ -10,6 +10,7 @@ public class GenericManager<T extends Comparable> {
     }
     public void addInOrder(T object){
         int i=0;
+
         //below is less than or equal to first object in list
         if (this.count==0||object.compareTo(this.myList.get(0))==-1||object.compareTo(this.myList.get(0))==0){
             this.myList.add(0,object);

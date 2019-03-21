@@ -3,6 +3,7 @@ public class Customer implements Comparable {
     protected double timeInSys;
     protected double timeInServer;
     protected double timeArrived;
+    protected int ailment;//0=heart, 1=gastro,2=bleeder
     protected int myNum;
     protected int balk;
 
