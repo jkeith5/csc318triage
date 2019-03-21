@@ -2,7 +2,7 @@ import java.util.Random;
 import java.util.Random.*;
 
 public class Main {
-
+    static int liveBleeders=0, bleedersDead=0, liveGastro=0, gastroDead=0, liveHeart=0, heartDead=0;
     public static void main(String[] args) {
         /*
         event list with numbers to their eve3nts
@@ -13,6 +13,7 @@ public class Main {
         5=balks
         8=shutdown of sim
         */
+
 	    double bigTime=0.0;
 	    double endTime=100.0;
         double eventTime=0.0;
@@ -53,14 +54,9 @@ public class Main {
             bigTime=workEvent.time;
             //above preps the server and updates customer and statistics
             numInQueue=customerQueue.count;
-            System.out.println("Event type: "+workEvent.eventType);
-            System.out.println("Bigtime: "+bigTime);
-            System.out.println("current event time trigger: "+workEvent.time);
             switch (workEvent.eventType){
-
                 case 1://arrives at triage
                     if (!busy1&& numInQueue<=0){//server 1 is not busy
-                        System.out.println("case: 1");
                         newCust.timeArrived=bigTime;
                         busy1=true;
                         served1=newCust;
@@ -81,7 +77,6 @@ public class Main {
                         setAilment(newCust);
                         //line 142
                         balkTime=generateBalkTime(newCust)+bigTime;
-                        System.out.println("balk time: "+balkTime);
                         addHeartInOrder(customerQueue,newCust);
                         workEvent=new Event(5,balkTime,balkID);//generates balk events and addes in order
                         eventQueue.addInOrder(workEvent);
@@ -96,7 +91,6 @@ public class Main {
                     break;
                 case 3:
                     //enter service bay 1
-                    System.out.println("case: 3");
                     numInQueue=customerQueue.count;
                     if (!busy1&&numInQueue>0){//cust in front enters service
                         workCust=customerQueue.getVal(0);
@@ -122,7 +116,6 @@ public class Main {
                     break;
                 case 4:
                     //leave service bay
-                    System.out.println("case: 4");
                     busy1=false;
                     totalThruSys++;
                     numInQueue=customerQueue.count;
@@ -133,14 +126,12 @@ public class Main {
                     break;
                 case 5:
                     //this handles balk events.
-                    System.out.println("case: 5");
+
                     myBalkCust=workEvent.custID;
                     totalBalk++;
                     removeEventBalk(customerQueue,myBalkCust);
                     break;
                 case 8://shutdown event
-                    System.out.println("case: 8");
-                    System.out.println("SHUTDOWN EVENT");
                     continue;
                 default:
                     System.out.println("bad event type of: "+ workEvent.eventType +"at time: "+workEvent.time);
@@ -152,6 +143,10 @@ public class Main {
             workEvent=eventQueue.getVal(0);
 
         }//end of loop
+        System.out.printf("Total Balk: %d\t\t Heart Balk: %d\t\t Bleeder Balk: %d \t\t Gastro Balk: %d\n",totalBalk,heartDead
+        ,bleedersDead,gastroDead);
+        System.out.println("Total thru Sys: "+totalThruSys);
+        System.out.println("Total time in Sys"+ totalTimeInSys);
 
     }
     public static double timeToEvent(double rate){
@@ -172,7 +167,7 @@ public class Main {
                 if (custLine.getVal(i).ailment!=0){
                     custLine.myList.add(i,customer);
                     custLine.count++;
-                    break;
+
                 }
             }
         }else{
@@ -188,9 +183,8 @@ public class Main {
             customer.ailment=0;
         else if (temp<.5)
             customer.ailment=1;
-        else
+        else if (temp<1)
             customer.ailment=2;
-        System.out.println("ailments:"+customer.ailment);
     }
 
     public static double generateBalkTime(Customer customer){
@@ -225,6 +219,9 @@ public class Main {
             custBalkID=workCust.getBalk();
             i++;
         }
+        if (workCust.ailment==0)heartDead++;
+        else if (workCust.ailment==1)gastroDead++;
+        else bleedersDead++;
         if (i==0) custLine.removeM(0);
         else if (custBalkID==balkID && i>0){
             custLine.removeM(i-1);
