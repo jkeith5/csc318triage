@@ -2,7 +2,10 @@ public class Event implements Comparable {
     protected int eventType;
     protected double time;
     protected int custID;
-
+    /*
+    *
+    *
+    * */
 
     public Event(int type, double time, int balk){
         this.eventType= type;

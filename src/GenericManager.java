@@ -25,6 +25,12 @@ public class GenericManager<T extends Comparable> {
         }
         this.count++;
     }
+    public T getVal(int i){
+        if (i<this.count)
+            return this.myList.get(i);
+        else
+            return this.myList.get(0);
+    }
     public void addAtFront(T object){
         this.myList.add(0,object);
         this.count++;
