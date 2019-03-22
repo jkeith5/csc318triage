@@ -54,6 +54,9 @@ public class Main {
             bigTime=workEvent.time;
             //above preps the server and updates customer and statistics
             numInQueue=customerQueue.count;
+//            System.out.println("Event type: "+workEvent.eventType);
+//            System.out.println("Bigtime: "+bigTime);
+//            System.out.println("current event time trigger: "+workEvent.time);
             switch (workEvent.eventType){
                 case 1://arrives at triage
                     if (!busy1&& numInQueue<=0){//server 1 is not busy
@@ -77,7 +80,7 @@ public class Main {
                         setAilment(newCust);
                         //line 142
                         balkTime=generateBalkTime(newCust)+bigTime;
-                        addHeartInOrder(customerQueue,newCust);
+                        customerQueue.addInOrder(newCust);
                         workEvent=new Event(5,balkTime,balkID);//generates balk events and addes in order
                         eventQueue.addInOrder(workEvent);
                     }
@@ -111,7 +114,7 @@ public class Main {
                         workEvent=new Event(4,eventTime,-9);
                         eventQueue.addInOrder(workEvent);
                         customerQueue.count--;//decrements counter for amt in line
-                        numInQueue--;
+
                     }
                     break;
                 case 4:
@@ -137,7 +140,6 @@ public class Main {
                     System.out.println("bad event type of: "+ workEvent.eventType +"at time: "+workEvent.time);
                     break;
             }
-
             eventQueue.removeM(0);//deletes processed event, and grabs next event.
             eventQueue.sort();
             workEvent=eventQueue.getVal(0);
@@ -160,21 +162,21 @@ public class Main {
         return delTime;
     }
 
-    public static void addHeartInOrder(GenericManager<Customer> custLine,Customer customer){
-        //this function adds patients in order of arrival and sorts hearts to the front.
-        if (customer.ailment==0){
-            for (int i=0; i<custLine.myList.size();i++){
-                if (custLine.getVal(i).ailment!=0){
-                    custLine.myList.add(i,customer);
-                    custLine.count++;
-
-                }
-            }
-        }else{
-            custLine.myList.add(customer);
-        }
-
-    }
+//    public static void addHeartInOrder(GenericManager<Customer> custLine,Customer customer){
+//        //this function adds patients in order of arrival and sorts hearts to the front.
+//        if (customer.ailment==0){
+//            for (int i=0; i<custLine.myList.size();i++){
+//                if (custLine.getVal(i).ailment!=0){
+//                    custLine.myList.add(i,customer);
+//                    custLine.count++;
+//
+//                }
+//            }
+//        }else{
+//            custLine.myList.add(customer);
+//        }
+//        custLine.sort();
+//    }
 
     public static void setAilment(Customer customer){//sets the ailment of the arriving customer
         double temp=0;
@@ -193,7 +195,6 @@ public class Main {
         bigX=Math.random();
         while (bigX>.9){
             bigX=Math.random();
-            System.out.println("here");
         }
         if (customer.ailment==0){//hearts
             balkTime= .9*bigX+.6;
