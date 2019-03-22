@@ -1,8 +1,10 @@
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Random.*;
 
 public class Main {
     static int liveBleeders=0, bleedersDead=0, liveGastro=0, gastroDead=0, liveHeart=0, heartDead=0;
+    static int liveBleeders2=0, liveGastro2=0, liveHeart2=0;
     public static void main(String[] args) {
         /*
         event list with numbers to their eve3nts
@@ -13,7 +15,7 @@ public class Main {
         5=balks
         8=shutdown of sim
         */
-
+        int heartPatientsSquared=0, bleederPatientSquared=0, gastroPatientSquard=0;
 	    double bigTime=0.0;
 	    double endTime=100.0;
         double eventTime=0.0;
@@ -38,11 +40,13 @@ public class Main {
         eventQueue.addInOrder(workEvent);
         delTimeArrive=timeToEvent(3);//three per hour
         eventTime=bigTime+delTimeArrive;
-        System.out.println("First customer arrives at: "+ eventTime);
         workEvent=new Event(1, eventTime,0);
         eventQueue.addInOrder(workEvent);
         workEvent=eventQueue.getVal(0);
-
+        for (int j=0;j<100;j++){
+            Event event= new Event(6,j,-90000);
+            eventQueue.addInOrder(event);
+        }
         while (workEvent.eventType!=8){
             deltaTime=workEvent.time-bigTime;
             ttil= updateCustomer(customerQueue, deltaTime);
@@ -54,9 +58,6 @@ public class Main {
             bigTime=workEvent.time;
             //above preps the server and updates customer and statistics
             numInQueue=customerQueue.count;
-//            System.out.println("Event type: "+workEvent.eventType);
-//            System.out.println("Bigtime: "+bigTime);
-//            System.out.println("current event time trigger: "+workEvent.time);
             switch (workEvent.eventType){
                 case 1://arrives at triage
                     if (!busy1&& numInQueue<=0){//server 1 is not busy
@@ -80,7 +81,11 @@ public class Main {
                         setAilment(newCust);
                         //line 142
                         balkTime=generateBalkTime(newCust)+bigTime;
-                        customerQueue.addInOrder(newCust);
+                        if (customerQueue.myList.size()==0){
+                            customerQueue.myList.add(newCust);
+                        }else {
+                            customerQueue.addInOrder(newCust);
+                        }
                         workEvent=new Event(5,balkTime,balkID);//generates balk events and addes in order
                         eventQueue.addInOrder(workEvent);
                     }
@@ -105,22 +110,24 @@ public class Main {
                         served1=workCust;
                         if (workCust.ailment==0) {//rates of service based on ailment
                             delTimeServe = timeToEvent(2);
+                            liveHeart++;
                         } else if (workCust.ailment==1){
                             delTimeServe= timeToEvent(4);
+                            liveGastro++;
                         }else{
                             delTimeServe=timeToEvent(6);
+                            liveBleeders++;
                         }
                         eventTime=delTimeServe+bigTime;
                         workEvent=new Event(4,eventTime,-9);
                         eventQueue.addInOrder(workEvent);
-                        customerQueue.count--;//decrements counter for amt in line
-
                     }
                     break;
                 case 4:
                     //leave service bay
                     busy1=false;
                     totalThruSys++;
+
                     numInQueue=customerQueue.count;
                     if (numInQueue>0){//generates event for someone to enter line
                         workEvent= new Event(3,bigTime+.0001,-9);
@@ -134,6 +141,17 @@ public class Main {
                     totalBalk++;
                     removeEventBalk(customerQueue,myBalkCust);
                     break;
+                case 6://statistics gathering
+                    heartPatientsSquared= heartPatientsSquared+(int)Math.pow(liveHeart,2);
+                    gastroPatientSquard= gastroPatientSquard+(int)Math.pow(liveGastro,2);
+                    bleederPatientSquared= bleederPatientSquared+(int)Math.pow(liveBleeders,2);
+                    liveHeart2+=liveHeart;
+                    liveBleeders2+=liveBleeders;
+                    liveGastro2+=liveGastro;
+                    liveHeart=0;
+                    liveBleeders=0;
+                    liveGastro=0;
+                    break;
                 case 8://shutdown event
                     continue;
                 default:
@@ -145,10 +163,18 @@ public class Main {
             workEvent=eventQueue.getVal(0);
 
         }//end of loop
-        System.out.printf("Total Balk: %d\t\t Heart Balk: %d\t\t Bleeder Balk: %d \t\t Gastro Balk: %d\n",totalBalk,heartDead
+        System.out.println("\t\t\tNumber of Patients Serviced");
+        System.out.printf("Heart Patients: %d\t\tGastro Patients: %d\t\tBleeder Patients: %d\n",liveHeart2,liveGastro2,
+                liveBleeders2);
+        System.out.println("Variance for Patients");
+        System.out.printf("Heart Variance: %5.3f\t\tGastro Variance: %5.3f\t\tBleeder Variance: %5.3f\n",calcVariance(liveHeart2),
+                calcVariance(liveGastro2), calcVariance(liveBleeders2));
+        System.out.println("Standard Deviation for Patients");
+        System.out.printf("Heart Deviation: %5.3f\t\tGastro Deviation: %5.3f\t\tBleeder Deviation: %5.3f\n",calcStdDev(Math.abs(calcVariance(liveHeart2))),
+                calcStdDev(Math.abs(calcVariance(liveGastro2))), calcStdDev(Math.abs(calcVariance(liveBleeders2))));
+        System.out.printf("Total Balk: %d\n Heart Balk: %d\t\t Bleeder Balk: %d \t\t Gastro Balk: %d\n",totalBalk,heartDead
         ,bleedersDead,gastroDead);
-        System.out.println("Total thru Sys: "+totalThruSys);
-        System.out.println("Total time in Sys"+ totalTimeInSys);
+        System.out.println("Total patients thru Sys: "+totalThruSys);
 
     }
     public static double timeToEvent(double rate){
@@ -161,22 +187,6 @@ public class Main {
         delTime=-Math.log(1-bigX)/rate;
         return delTime;
     }
-
-//    public static void addHeartInOrder(GenericManager<Customer> custLine,Customer customer){
-//        //this function adds patients in order of arrival and sorts hearts to the front.
-//        if (customer.ailment==0){
-//            for (int i=0; i<custLine.myList.size();i++){
-//                if (custLine.getVal(i).ailment!=0){
-//                    custLine.myList.add(i,customer);
-//                    custLine.count++;
-//
-//                }
-//            }
-//        }else{
-//            custLine.myList.add(customer);
-//        }
-//        custLine.sort();
-//    }
 
     public static void setAilment(Customer customer){//sets the ailment of the arriving customer
         double temp=0;
@@ -260,5 +270,16 @@ public class Main {
         if (b1&&b2) return serveTime=2*delTime;
         else if (b1||b2) return delTime;
         return serveTime;
+    }
+
+    public static double calcVariance(double totalPatients){//calculates the variance
+        double variance=0;
+        double average= totalPatients/100;
+        variance= totalPatients/(double)100-average*average;
+        return variance;
+    }
+
+    public static double calcStdDev(double variance){
+        return Math.sqrt(variance);
     }
 }

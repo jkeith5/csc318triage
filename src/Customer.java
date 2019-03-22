@@ -54,9 +54,9 @@ public class Customer implements Comparable {
 
     @Override
     public int compareTo(Object o) {
-        if (this.ailment< ((Customer) o).ailment) return 1;
+        if (this.ailment< ((Customer) o).ailment) return -1;
         else if (this.ailment == ((Customer) o).ailment) {
             return Double.compare(this.timeInLine, ((Customer) o).timeInLine);
-        } else return -1;
+        } else return 1;
     }
 }
